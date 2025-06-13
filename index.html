@@ -7,9 +7,18 @@
     <!-- Ethers.js para interactuar con la blockchain -->
     <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
     <style>
-        :root { /* ...tu código existente... */ }
+        :root {
+            --primary: #6e45e2; --secondary: #44aaee; --accent: #44eeaa;
+            --background: #0a0a0a; --card-bg: #1a1a1a; --text: #ffffff;
+            --border: rgba(255,255,255,0.1);
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { /* ...tu código existente... */ }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #1a1a2e 100%);
+            color: var(--text); min-height: 100vh; overflow-x: hidden;
+            user-select: none; -webkit-user-select: none;
+        }
         .app-container { max-width: 448px; margin: 0 auto; padding: 10px; min-height: 100vh; display: flex; flex-direction: column; }
         .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px 15px; border-radius: 15px; margin-bottom: 15px; text-align: center; }
         .tabs { display: flex; background: var(--card-bg); border-radius: 12px; padding: 4px; margin-bottom: 15px; border: 1px solid var(--border); }
@@ -17,12 +26,19 @@
         .tab.active { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(110, 69, 226, 0.4); }
         .card { background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
         .countdown { font-size: 28px; font-weight: 700; text-align: center; margin: 15px 0; color: var(--accent); }
-        .btn { /* ...tu código existente... */ }
+        .btn {
+            width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+            border: none; border-radius: 20px; cursor: pointer; transition: background 0.3s ease, color 0.3s ease;
+            text-transform: uppercase; letter-spacing: 1px; margin-top: 10px;
+        }
         .btn.disabled { background: #444; color: #888; cursor: not-allowed; }
         .action-btn { background: var(--primary); color: white; }
         .mine-btn.ready { background: linear-gradient(135deg, var(--accent), var(--secondary)); color: white; }
         .mine-btn.disabled { background: linear-gradient(135deg, #444, #666); color: rgba(255,255,255,0.5); }
-        #statusMessage { /* ...tu código existente... */ }
+        #statusMessage {
+            text-align: center; padding: 12px; margin: 15px 0 5px 0; border-radius: 8px;
+            display: none; font-size: 14px; line-height: 1.5;
+        }
         #statusMessage.success { background-color: rgba(68, 238, 170, 0.2); color: var(--accent); }
         #statusMessage.error { background-color: rgba(255, 100, 100, 0.2); color: #ff8888; }
         #statusMessage.info { background-color: rgba(68, 170, 238, 0.2); color: var(--secondary); }
@@ -41,65 +57,220 @@
     <div class="app-container">
         <div class="header"><h1>💎 DTY Mining</h1><p>Destinity Token Mining</p></div>
         <div class="tabs">
+            <button class="tab active" data-tab="mining">⛏️ Mining</button>
+            <button class="tab" data-tab="stats">📊 Stats</button>
+            <button class="tab" data-tab="history">📜 History</button>
         </div>
         <div class="tab-content active" id="mining">
-            <!-- Botón de verificación y minería -->
-            <button class="btn mine-btn" id="verifyWorldIDBtn">Verificar con World ID</button>
-            <button class="btn mine-btn" id="mineTokenBtn" disabled>Minar Token</button>
+            <div class="card" id="action-container">
+                <h3 style="text-align:center; margin-bottom: 15px;">Pasos para Reclamar</h3>
+                <div id="statusMessage"></div>
+                <button class="btn action-btn disabled" id="connectBtn">Buscando Billetera...</button>
+                <button class="btn action-btn disabled" id="loginBtn" style="display: none;">2. Iniciar Sesión</button>
+                <button class="btn action-btn disabled" id="verifyBtn" style="display: none;">3. Verificar Humanidad</button>
+            </div>
+            <div class="card" id="mining-container" style="display: none;">
+                <h3 style="margin-bottom: 15px; text-align: center;">⏰ Next Claim</h3>
+                <div id="statusMessageInMining"></div>
+                <div class="countdown" id="countdown">READY TO MINE!</div>
+                <button class="mine-btn ready" id="mineBtn"><span>Reclamar Tokens DTY</span></button>
+            </div>
         </div>
         <div class="tab-content" id="stats">
+             <div class="card">
+                <h3 style="margin-bottom: 15px; text-align: center;">📈 Estadísticas Locales</h3>
+                <div class="stats-grid">
+                    <div class="stat-item"><div class="stat-value" id="balanceDisplay">0.00</div><div class="stat-label">Balance</div></div>
+                    <div class="stat-item"><div class="stat-value" id="totalMined">0.00</div><div class="stat-label">Total Minado</div></div>
+                    <div class="stat-item"><div class="stat-value" id="miningCount">0</div><div class="stat-label">Sesiones</div></div>
+                    <div class="stat-item"><div class="stat-value" id="levelDisplay">1</div><div class="stat-label">Nivel</div></div>
+                </div>
+            </div>
         </div>
         <div class="tab-content" id="history">
+            <div class="card">
+                <h3 style="margin-bottom: 15px; text-align: center;">📜 Historial Local</h3>
+                <div class="history-list" id="historyList"><div style="text-align: center; opacity: 0.6; padding: 20px;">No hay historial aún.</div></div>
+            </div>
         </div>
     </div>
     <script type="module">
         import { MiniKit, parseSiweMessage } from "https://cdn.jsdelivr.net/npm/@worldcoin/minikit-js@1/+esm";
 
+        // --- CONFIGURACIÓN ---
         const CONTRACT_ADDRESS = "0x55E6C9C22C0eaD68F0be7CdcB5d8BAa636a8A1a0"; 
         const WORLDCOIN_APP_ID = "app_158d2ce5b87e96111765af5b41168b93";
         const ACTION_ID = "test-action";
+        const CONTRACT_ABI = [{"inputs":[{"internalType":"contract IWorldIdAddressBook","name":"_worldAddressBook","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"allowance","type":"uint256"},{"internalType":"uint256","name":"needed","type":"uint256"}],"name":"ERC20InsufficientAllowance","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"needed","type":"uint256"}],"name":"ERC20InsufficientBalance","type":"error"},{"inputs":[{"internalType":"address","name":"approver","type":"address"}],"name":"ERC20InvalidApprover","type":"error"},{"inputs":[{"internalType":"address","name":"receiver","type":"address"}],"name":"ERC20InvalidReceiver","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"}],"name":"ERC20InvalidSender","type":"error"},{"inputs":[{"internalType":"address","name":"spender","type":"address"}],"name":"ERC20InvalidSpender","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[],"name":"CLAIM_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CLAIM_FREQUENCY_SECONDS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"lastMint","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"worldAddressBook","outputs":[{"internalType":"contract IWorldIdAddressBook","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
 
-        MiniKit.init({
-            app_id: WORLDCOIN_APP_ID,
-            action: ACTION_ID,
-        });
+        // --- ESTADO Y ELEMENTOS ---
+        const appState = { provider: null, signer: null, contract: null };
+        const elements = {
+            connectBtn: document.getElementById('connectBtn'),
+            loginBtn: document.getElementById('loginBtn'),
+            verifyBtn: document.getElementById('verifyBtn'),
+            mineBtn: document.getElementById('mineBtn'),
+            statusMessage: document.getElementById('statusMessage'),
+            actionContainer: document.getElementById('action-container'),
+            miningContainer: document.getElementById('mining-container'),
+            countdown: document.getElementById('countdown'),
+        };
 
-        let isVerified = false;
+        // --- FUNCIONES DE LA APP ---
+        
+        async function connectWallet() {
+            setButtonState(elements.connectBtn, 'Conectando...', true);
+            try {
+                if (!window.ethereum) throw new Error("Wallet not found");
+                appState.provider = new window.ethers.providers.Web3Provider(window.ethereum);
+                await appState.provider.send("eth_requestAccounts", []);
+                appState.signer = appState.provider.getSigner();
+                appState.contract = new window.ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, appState.signer);
+                showStatus("Billetera conectada.", "success");
+                updateUI('walletConnected');
+            } catch (e) {
+                showStatus("Conexión rechazada. Intenta de nuevo.", "error");
+                setButtonState(elements.connectBtn, '1. Conectar Billetera', false);
+            }
+        }
+
+        async function loginWithSIWE() {
+            setButtonState(elements.loginBtn, 'Firmando...', true);
+            try {
+                const address = await appState.signer.getAddress();
+                const siweMessage = parseSiweMessage({
+                    address, domain: window.location.host, uri: window.location.origin,
+                    statement: 'Confirmo mi identidad para DTY Mining.', version: '1',
+                    chainId: await appState.signer.getChainId(),
+                });
+                await appState.signer.signMessage(siweMessage.toMessage());
+                showStatus("Inicio de sesión exitoso.", "success");
+                updateUI('loggedIn');
+            } catch (e) {
+                showStatus("Inicio de sesión rechazado.", "error");
+                setButtonState(elements.loginBtn, '2. Iniciar Sesión', false);
+            }
+        }
 
         async function verifyWithWorldID() {
+            setButtonState(elements.verifyBtn, 'Verificando...', true);
             try {
                 const result = await MiniKit.open();
-                console.log("Verificación exitosa:", result);
-                isVerified = true;
-                document.getElementById("mineTokenBtn").disabled = false;
-                alert("¡Verificación exitosa! Ahora puedes minar tokens.");
-            } catch (error) {
-                console.error("Error en la verificación:", error);
-                isVerified = false;
-                document.getElementById("mineTokenBtn").disabled = true;
-                alert("La verificación falló o fue cancelada.");
+                if (!result) throw new Error("Proceso de verificación cancelado.");
+                showStatus("¡Humano verificado!", "success");
+                updateUI('verified');
+            } catch (e) {
+                showStatus("Verificación de World ID falló.", "error");
+                setButtonState(elements.verifyBtn, '3. Verificar Humanidad', false);
             }
         }
 
-        function mineToken() {
-            if (!isVerified) {
-                alert("Debes verificarte con World ID antes de minar.");
-                return;
+        async function claimTokens() {
+            setButtonState(elements.mineBtn, 'Procesando...', true);
+            try {
+                showStatus("Enviando transacción...", "info", true);
+                const tx = await appState.contract.claim();
+                await tx.wait();
+                showStatus("¡Tokens reclamados con éxito!", "success", true);
+                localStorage.setItem('dtyNextClaimTime', Date.now() + 24 * 3600 * 1000);
+                startCountdown();
+            } catch (e) {
+                showStatus("La transacción falló. ¿Ya reclamaste hoy?", "error", true);
+                setButtonState(elements.mineBtn, 'Reclamar Tokens DTY', false);
             }
-            // Aquí va la lógica de minería real
-            alert("¡Token minado exitosamente!");
+        }
+        
+        // --- FUNCIONES DE UI Y AYUDANTES ---
+
+        function setButtonState(button, text, isDisabled) {
+            button.textContent = text;
+            button.disabled = isDisabled;
+            button.classList.toggle('disabled', isDisabled);
+        }
+        
+        function showStatus(message, type, inMiningArea = false) {
+            const el = inMiningArea 
+                ? document.getElementById('statusMessageInMining') 
+                : elements.statusMessage;
+            if (el) {
+                el.textContent = message;
+                el.className = type;
+                el.style.display = 'block';
+            }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const verifyBtn = document.getElementById("verifyWorldIDBtn");
-            const mineBtn = document.getElementById("mineTokenBtn");
-            if (verifyBtn) {
-                verifyBtn.addEventListener("click", verifyWithWorldID);
+        function updateUI(step) {
+            if (step === 'walletConnected') {
+                elements.connectBtn.style.display = 'none';
+                elements.loginBtn.style.display = 'block';
+                setButtonState(elements.loginBtn, '2. Iniciar Sesión', false);
+            } else if (step === 'loggedIn') {
+                elements.loginBtn.style.display = 'none';
+                elements.verifyBtn.style.display = 'block';
+                setButtonState(elements.verifyBtn, '3. Verificar Humanidad', false);
+            } else if (step === 'verified') {
+                elements.actionContainer.style.display = 'none';
+                elements.miningContainer.style.display = 'block';
+                startCountdown();
             }
-            if (mineBtn) {
-                mineBtn.addEventListener("click", mineToken);
+        }
+        
+        function startCountdown() {
+            const nextTime = Number(localStorage.getItem('dtyNextClaimTime') || 0);
+            if (window.claimInterval) clearInterval(window.claimInterval);
+            const interval = setInterval(() => {
+                const timeLeft = nextTime - Date.now();
+                if (timeLeft <= 0) {
+                    elements.countdown.textContent = '¡Listo para Reclamar!';
+                    setButtonState(elements.mineBtn, 'Reclamar Tokens DTY', false);
+                    clearInterval(interval);
+                } else {
+                    const h = Math.floor(timeLeft / 3600000);
+                    const m = Math.floor((timeLeft % 3600000) / 60000);
+                    const s = Math.floor((timeLeft % 60000) / 1000);
+                    elements.countdown.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    setButtonState(elements.mineBtn, 'En Enfriamiento', true);
+                }
+            }, 1000);
+            window.claimInterval = interval;
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function initApp() {
+            elements.connectBtn.addEventListener('click', connectWallet);
+            elements.loginBtn.addEventListener('click', loginWithSIWE);
+            elements.verifyBtn.addEventListener('click', verifyWithWorldID);
+            elements.mineBtn.addEventListener('click', claimTokens);
+            document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+            
+            MiniKit.init({ app_id: WORLDCOIN_APP_ID, action: ACTION_ID });
+
+            // ✅ CORRECCIÓN: Espera a que la billetera esté lista para habilitar el botón.
+            if (window.ethereum) {
+                setButtonState(elements.connectBtn, '1. Conectar Billetera', false);
+            } else {
+                showStatus("Buscando billetera en la World App...", "info");
+                window.addEventListener('ethereum#initialized', () => {
+                    setButtonState(elements.connectBtn, '1. Conectar Billetera', false);
+                    showStatus("¡Billetera encontrada! Por favor, conecta.", "success");
+                }, { once: true });
+                // Timeout por si el evento no se dispara
+                setTimeout(() => {
+                    if (!window.ethereum) {
+                        setButtonState(elements.connectBtn, 'Billetera no Encontrada', true);
+                        showStatus("No se pudo encontrar la billetera. Asegúrate de estar en la World App.", "error");
+                    }
+                }, 3000);
             }
-        });
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
