@@ -75,6 +75,11 @@
                 <div class="countdown" id="countdown">READY TO MINE!</div>
                 <button class="mine-btn ready" id="mineBtn"><span>Reclamar Tokens DTY</span></button>
             </div>
+            <!-- BOTONES AGREGADOS DE WORLD ID -->
+            <div style="margin: 20px 0; text-align: center;">
+                <button class="btn mine-btn" id="verifyWorldIDBtn">Verificar con World ID</button>
+                <button class="btn mine-btn" id="mineTokenBtn" disabled>Minar Token</button>
+            </div>
         </div>
         <div class="tab-content" id="stats">
              <div class="card">
@@ -242,6 +247,7 @@
             document.getElementById(tabName).classList.add('active');
         }
 
+        // --- INICIO DE APP ---
         function initApp() {
             elements.connectBtn.addEventListener('click', connectWallet);
             elements.loginBtn.addEventListener('click', loginWithSIWE);
@@ -270,7 +276,40 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', initApp);
+        // --- LÓGICA AGREGADA DE WORLD ID (NO MODIFICA TU FLUJO ORIGINAL) ---
+        let isWorldIDVerified = false;
+
+        async function verifyWithWorldIDExtra() {
+            try {
+                const result = await MiniKit.open();
+                if (result) {
+                    isWorldIDVerified = true;
+                    document.getElementById("mineTokenBtn").disabled = false;
+                    alert("¡Verificación World ID exitosa! Ahora puedes minar tokens.");
+                }
+            } catch (error) {
+                isWorldIDVerified = false;
+                document.getElementById("mineTokenBtn").disabled = true;
+                alert("La verificación World ID falló o fue cancelada.");
+            }
+        }
+
+        function mineTokenExtra() {
+            if (!isWorldIDVerified) {
+                alert("Debes verificarte con World ID antes de minar.");
+                return;
+            }
+            alert("¡Token minado exitosamente! (Lógica de minería aquí)");
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initApp();
+            // Botones agregados
+            const verifyBtn = document.getElementById("verifyWorldIDBtn");
+            const mineBtn = document.getElementById("mineTokenBtn");
+            if (verifyBtn) verifyBtn.addEventListener("click", verifyWithWorldIDExtra);
+            if (mineBtn) mineBtn.addEventListener("click", mineTokenExtra);
+        });
     </script>
 </body>
 </html>
