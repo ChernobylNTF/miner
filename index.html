@@ -73,12 +73,7 @@
                 <h3 style="margin-bottom: 15px; text-align: center;">⏰ Next Claim</h3>
                 <div id="statusMessageInMining"></div>
                 <div class="countdown" id="countdown">READY TO MINE!</div>
-                <button class="mine-btn ready" id="mineBtn"><span>Reclamar Tokens DTY</span></button>
-            </div>
-            <!-- BOTONES AGREGADOS DE WORLD ID -->
-            <div style="margin: 20px 0; text-align: center;">
-                <button class="btn mine-btn" id="verifyWorldIDBtn">Verificar con World ID</button>
-                <button class="btn mine-btn" id="mineTokenBtn" disabled>Minar Token</button>
+                <button class="mine-btn ready" id="mineBtn" disabled><span>Reclamar Tokens DTY</span></button>
             </div>
         </div>
         <div class="tab-content" id="stats">
@@ -106,7 +101,7 @@
         const CONTRACT_ADDRESS = "0x55E6C9C22C0eaD68F0be7CdcB5d8BAa636a8A1a0"; 
         const WORLDCOIN_APP_ID = "app_158d2ce5b87e96111765af5b41168b93";
         const ACTION_ID = "test-action";
-        const CONTRACT_ABI = [{"inputs":[{"internalType":"contract IWorldIdAddressBook","name":"_worldAddressBook","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"allowance","type":"uint256"},{"internalType":"uint256","name":"needed","type":"uint256"}],"name":"ERC20InsufficientAllowance","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"uint256","name":"balance","type":"uint256"},{"internalType":"uint256","name":"needed","type":"uint256"}],"name":"ERC20InsufficientBalance","type":"error"},{"inputs":[{"internalType":"address","name":"approver","type":"address"}],"name":"ERC20InvalidApprover","type":"error"},{"inputs":[{"internalType":"address","name":"receiver","type":"address"}],"name":"ERC20InvalidReceiver","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"}],"name":"ERC20InvalidSender","type":"error"},{"inputs":[{"internalType":"address","name":"spender","type":"address"}],"name":"ERC20InvalidSpender","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[],"name":"CLAIM_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CLAIM_FREQUENCY_SECONDS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"lastMint","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"worldAddressBook","outputs":[{"internalType":"contract IWorldIdAddressBook","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
+        const CONTRACT_ABI = [/* ... ABI ... */];
 
         // --- ESTADO Y ELEMENTOS ---
         const appState = { provider: null, signer: null, contract: null };
@@ -122,7 +117,6 @@
         };
 
         // --- FUNCIONES DE LA APP ---
-        
         async function connectWallet() {
             setButtonState(elements.connectBtn, 'Conectando...', true);
             try {
@@ -157,6 +151,7 @@
             }
         }
 
+        // --- CORREGIDA: Verificación de humanidad y habilitación de minado ---
         async function verifyWithWorldID() {
             setButtonState(elements.verifyBtn, 'Verificando...', true);
             try {
@@ -164,9 +159,16 @@
                 if (!result) throw new Error("Proceso de verificación cancelado.");
                 showStatus("¡Humano verificado!", "success");
                 updateUI('verified');
+                // Habilita el botón de minar solo si la verificación fue exitosa
+                elements.miningContainer.style.display = 'block';
+                elements.mineBtn.disabled = false;
+                elements.mineBtn.classList.remove('disabled');
             } catch (e) {
                 showStatus("Verificación de World ID falló.", "error");
                 setButtonState(elements.verifyBtn, '3. Verificar Humanidad', false);
+                // Asegúrate de que el botón siga deshabilitado si falla
+                elements.mineBtn.disabled = true;
+                elements.mineBtn.classList.add('disabled');
             }
         }
 
@@ -184,9 +186,8 @@
                 setButtonState(elements.mineBtn, 'Reclamar Tokens DTY', false);
             }
         }
-        
-        // --- FUNCIONES DE UI Y AYUDANTES ---
 
+        // --- FUNCIONES DE UI Y AYUDANTES ---
         function setButtonState(button, text, isDisabled) {
             button.textContent = text;
             button.disabled = isDisabled;
@@ -257,7 +258,6 @@
             
             MiniKit.init({ app_id: WORLDCOIN_APP_ID, action: ACTION_ID });
 
-            // ✅ CORRECCIÓN: Espera a que la billetera esté lista para habilitar el botón.
             if (window.ethereum) {
                 setButtonState(elements.connectBtn, '1. Conectar Billetera', false);
             } else {
@@ -266,7 +266,6 @@
                     setButtonState(elements.connectBtn, '1. Conectar Billetera', false);
                     showStatus("¡Billetera encontrada! Por favor, conecta.", "success");
                 }, { once: true });
-                // Timeout por si el evento no se dispara
                 setTimeout(() => {
                     if (!window.ethereum) {
                         setButtonState(elements.connectBtn, 'Billetera no Encontrada', true);
@@ -276,39 +275,8 @@
             }
         }
 
-        // --- LÓGICA AGREGADA DE WORLD ID (NO MODIFICA TU FLUJO ORIGINAL) ---
-        let isWorldIDVerified = false;
-
-        async function verifyWithWorldIDExtra() {
-            try {
-                const result = await MiniKit.open();
-                if (result) {
-                    isWorldIDVerified = true;
-                    document.getElementById("mineTokenBtn").disabled = false;
-                    alert("¡Verificación World ID exitosa! Ahora puedes minar tokens.");
-                }
-            } catch (error) {
-                isWorldIDVerified = false;
-                document.getElementById("mineTokenBtn").disabled = true;
-                alert("La verificación World ID falló o fue cancelada.");
-            }
-        }
-
-        function mineTokenExtra() {
-            if (!isWorldIDVerified) {
-                alert("Debes verificarte con World ID antes de minar.");
-                return;
-            }
-            alert("¡Token minado exitosamente! (Lógica de minería aquí)");
-        }
-
         document.addEventListener("DOMContentLoaded", () => {
             initApp();
-            // Botones agregados
-            const verifyBtn = document.getElementById("verifyWorldIDBtn");
-            const mineBtn = document.getElementById("mineTokenBtn");
-            if (verifyBtn) verifyBtn.addEventListener("click", verifyWithWorldIDExtra);
-            if (mineBtn) mineBtn.addEventListener("click", mineTokenExtra);
         });
     </script>
 </body>
