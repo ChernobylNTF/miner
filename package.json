@@ -1,0 +1,36 @@
+{
+  "name": "dty-mining-app",
+  "version": "1.0.0",
+  "description": "DTY Mining App with Worldcoin MiniKit integration",
+  "main": "config.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx http-server . -p 3000 -o",
+    "dev": "npx http-server . -p 3000 -o",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChernobylNTF/miner.git"
+  },
+  "keywords": [
+    "worldcoin",
+    "minikit",
+    "dty",
+    "mining",
+    "blockchain",
+    "worldid"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChernobylNTF/miner/issues"
+  },
+  "homepage": "https://github.com/ChernobylNTF/miner#readme",
+  "dependencies": {
+    "@worldcoin/minikit-js": "^1.9.6"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
